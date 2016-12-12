@@ -3,12 +3,28 @@ var app = express();
 var mysql = require('mysql');
 var connection = require('./connectors/mysql.js');
 
-connection.connect();
+function getError(err) {
+	var errObj = {};
+	errObj['code'] = err.code;
+	errObj['desc'] = err.toString();
+	errObj['fatal'] = err.fatal;	
+	return errObj;
+}
+
+connection.connect(function(err) {
+	if (err) {
+		console.error('Error connecting to mysql db: ' + err.stack);
+		return;
+	}
+	
+	console.log('connected as id ' + connection.threadId);
+}
+	
+);
 
 app.get('/', function (req, res) {
     res.send('Hello World!');
 });
-
 
 app.get('/movie/:id', function (req, res) {
     var movieID = parseInt(req.params.id, 10);
@@ -27,24 +43,33 @@ app.get('/movie/:id', function (req, res) {
 	genresQuery = mysql.format(genresQuery, inserts);
     
     connection.query(movieQuery + castQuery + directorsQuery + genresQuery, function(err, rows, fields) {
-        if (err) throw err;
-        var movie = {};
-		
-		if (rows[0].length == 1) {
-			movie = rows[0][0];
-			var actors = rows[1];
-			var directors = rows[2];
-			var genres = rows[3].map(function (genreObj) {
-				// Change each element from genre object to just a string
-				return genreObj['genre'];
-			});
-			
-			movie['actors'] = actors;
-			movie['directors'] = directors;
-			movie['genres'] = genres;
-		}
         res.setHeader('Content-Type', 'application/json');
-        res.send(movie);
+        
+		if (err) {
+			console.log(err);
+			res.send(getError(err));
+		}
+		else {
+			var movie = { err: 0 };
+			if (rows[0].length == 1) {
+				movie = rows[0][0];
+				var actors = rows[1];
+				var directors = rows[2];
+				var genres = rows[3].map(function (genreObj) {
+					// Change each element from genre object to just a string
+					return genreObj['genre'];
+				});
+				
+				movie['actors'] = actors;
+				movie['directors'] = directors;
+				movie['genres'] = genres;
+			}
+			else {
+				movie['err'] = -1;
+				movie['desc'] = "No movie with that id";	
+			}
+			res.send(movie);
+		}
     });
 });
 
@@ -62,17 +87,28 @@ app.get('/actor/:id', function (req, res) {
     directorsQuery = mysql.format(directorsQuery, inserts);
     
     connection.query(moviesQuery + actorQuery + directorsQuery, function(err, rows, fields) {
-        if (err) throw err;
-        
-        var movies = rows[0];
-        var actor = rows[1][0];
-        var directors = rows[2];
-        
-        actor['movies'] = movies;
-        actor['directors'] = directors;
-
         res.setHeader('Content-Type', 'application/json');
-        res.send(actor);
+        
+		if (err) {
+			console.log(err);
+			res.send(getError(err));
+		}
+		else {
+			var actor = { err: 0 };
+			if (rows[1].length == 1) {
+				var movies = rows[0];
+				actor = rows[1][0];
+				var directors = rows[2];
+				
+				actor['movies'] = movies;
+				actor['directors'] = directors;
+			}
+			else {
+				actor['err'] = -1;
+				actor['desc'] = 'No actor with that id';
+			}
+			res.send(actor);
+		}
     });
 });
 
@@ -90,17 +126,28 @@ app.get('/director/:id', function (req, res) {
     directorQuery = mysql.format(directorQuery, inserts);
     
     connection.query(moviesQuery + actorsQuery + directorQuery, function(err, rows, fields) {
-        if (err) throw err;
-        
-        var movies = rows[0];
-        var actors = rows[1];
-        var director = rows[2][0];
-        
-        director['movies'] = movies;
-        director['actors'] = actors;
-
         res.setHeader('Content-Type', 'application/json');
-        res.send(director);
+        
+		if (err) {
+			console.log(err);
+			res.send(getError(err));
+		}
+		else {
+			var director = { err: 0 };
+			if (rows[2].length == 1) {
+				var movies = rows[0];
+				var actors = rows[1];
+				director = rows[2][0];
+				
+				director['movies'] = movies;
+				director['actors'] = actors;
+			}
+			else {
+				director['err'] = -1;
+				director['desc'] = 'No director with that id';	
+			}
+			res.send(director);
+		}
     });
 });
 
