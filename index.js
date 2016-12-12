@@ -22,17 +22,27 @@ app.get('/movie/:id', function (req, res) {
 
     var directorsQuery = 'SELECT Directors.* FROM Directors, Directed_By WHERE Directors.dID = Directed_By.dID AND Directed_By.mID = ?;';
     directorsQuery = mysql.format(directorsQuery, inserts);
+	
+	var genresQuery = 'SELECT Genres.genre FROM Genres, Of_Genre WHERE Of_Genre.gID = Genres.gID AND Of_Genre.mID = ?;';
+	genresQuery = mysql.format(genresQuery, inserts);
     
-    connection.query(movieQuery + castQuery + directorsQuery, function(err, rows, fields) {
+    connection.query(movieQuery + castQuery + directorsQuery + genresQuery, function(err, rows, fields) {
         if (err) throw err;
-        
-        var movie = rows[0][0];
-        var actors = rows[1];
-        var directors = rows[2];
-        
-        movie['actors'] = actors;
-        movie['directors'] = directors;
-
+        var movie = {};
+		
+		if (rows[0].length == 1) {
+			movie = rows[0][0];
+			var actors = rows[1];
+			var directors = rows[2];
+			var genres = rows[3].map(function (genreObj) {
+				// Change each element from genre object to just a string
+				return genreObj['genre'];
+			});
+			
+			movie['actors'] = actors;
+			movie['directors'] = directors;
+			movie['genres'] = genres;
+		}
         res.setHeader('Content-Type', 'application/json');
         res.send(movie);
     });
