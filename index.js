@@ -140,7 +140,8 @@ app.get('/actorByGenre/:genre', function(req, res) {
     var genre = req.params.genre;
     var inserts = [genre];
 
-    var query = 'SELECT DISTINCT Actors.name, Actors.aID, Cast_In.role, Movies.name AS mname, Movies.mID FROM Movies, Of_Genre, Genres, Actors, Cast_In WHERE Genres.genre = ? AND Genres.gID = Of_Genre.gID AND Of_Genre.mID = Movies.mID AND Cast_In.aID = Actors.aID AND Cast_In.mID = Movies.mID LIMIT 10';
+    var query = 'SELECT Actors.name, Actors.aID, Cast_In.role, Movies.name AS mname, Movies.mID FROM Actors, Movies, Genres, Cast_In, Of_Genre WHERE Genres.genre = ? AND Genres.gid = Of_Genre.gid AND Of_Genre.mID = Movies.mID AND Cast_In.mID = Movies.mID AND Cast_In.aID = Actors.aID GROUP BY Movies.mID ORDER BY Movies.gross DESC';
+
 
 
     
