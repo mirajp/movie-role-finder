@@ -25,10 +25,33 @@ connection.connect(function(err) {
 app.get('/', function (req, res) {
     res.send('Hello World!');
 });
+app.get('/actorByName/:name', function (req, res) {
+    var name = req.params.name + '%';
+    console.log('name: ', name);
+    var inserts = [name];
+    var query = 'SELECT * FROM Actors WHERE name LIKE ? LIMIT 10;';
+    query = mysql.format(query, inserts);
+    console.log(query);
+    connection.query(query, function(err, rows, fields) {
 
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+	if (err) {
+	    console.log(err);
+	    res.send(getError(err));
+	}
+
+        else {
+            res.send(rows);
+        }
+
+        
+    });
+    
+});
+        
 app.get('/movie/:id', function (req, res) {
     var movieID = parseInt(req.params.id, 10);
-    
     var inserts = [movieID];
     var movieQuery = 'SELECT * FROM Movies WHERE mID = ?;';
     movieQuery = mysql.format(movieQuery, inserts);
@@ -44,7 +67,7 @@ app.get('/movie/:id', function (req, res) {
     
     connection.query(movieQuery + castQuery + directorsQuery + genresQuery, function(err, rows, fields) {
         res.setHeader('Content-Type', 'application/json');
-        
+        res.setHeader('Access-Control-Allow-Origin', '*');
 		if (err) {
 			console.log(err);
 			res.send(getError(err));
@@ -88,6 +111,7 @@ app.get('/actor/:id', function (req, res) {
     
     connection.query(moviesQuery + actorQuery + directorsQuery, function(err, rows, fields) {
         res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Access-Control-Allow-Origin', '*');
         
 		if (err) {
 			console.log(err);
@@ -112,6 +136,36 @@ app.get('/actor/:id', function (req, res) {
     });
 });
 
+app.get('/actorByGenre/:genre', function(req, res) {
+    var genre = req.params.genre;
+    var inserts = [genre];
+
+    var query = 'SELECT DISTINCT Actors.name, Actors.aID, Cast_In.role, Movies.name AS mname, Movies.mID FROM Movies, Of_Genre, Genres, Actors, Cast_In WHERE Genres.genre = ? AND Genres.gID = Of_Genre.gID AND Of_Genre.mID = Movies.mID AND Cast_In.aID = Actors.aID AND Cast_In.mID = Movies.mID LIMIT 10';
+
+
+    
+    query = mysql.format(query, inserts);
+
+    console.log(query);
+    connection.query(query, function(err, rows, fields) {
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+	if (err) {
+	    console.log(err);
+	    res.send(getError(err));
+	}
+
+        else {
+            res.send(rows);
+        }
+
+        
+    });
+    
+});
+
+
 app.get('/director/:id', function (req, res) {
     var directorID = parseInt(req.params.id, 10);
     
@@ -127,7 +181,7 @@ app.get('/director/:id', function (req, res) {
     
     connection.query(moviesQuery + actorsQuery + directorQuery, function(err, rows, fields) {
         res.setHeader('Content-Type', 'application/json');
-        
+        res.setHeader('Access-Control-Allow-Origin', '*');
 		if (err) {
 			console.log(err);
 			res.send(getError(err));
