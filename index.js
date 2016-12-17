@@ -2,6 +2,11 @@ var express = require('express');
 var app = express();
 var mysql = require('mysql');
 var connection = require('./connectors/mysql.js');
+var bodyParser = require('body-parser')
+app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
+  extended: true
+}));
+
 
 function getError(err) {
 	var errObj = {};
@@ -22,6 +27,8 @@ connection.connect(function(err) {
 	
 );
 
+
+
 app.get('/', function (req, res) {
     res.send('Hello World!');
 });
@@ -35,8 +42,8 @@ app.get('/actorByName/:name', function (req, res) {
     connection.query(query, function(err, rows, fields) {
 
         res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-	if (err) {
+	res.setHeader('Access-Control-Allow-Origin', '*');
+if (err) {
 	    console.log(err);
 	    res.send(getError(err));
 	}
@@ -135,6 +142,87 @@ app.get('/actor/:id', function (req, res) {
 		}
     });
 });
+
+
+app.get('/query/:genre/:budget/:duration/:gender', function (req, res) {
+    var genre = req.params.genre;
+    var budget = parseInt(req.params.budget, 10);
+    var duration = parseInt(req.params.duration, 10);
+    var gender = parseInt(req.params.gender, 10);
+
+    var budgetQuery = "";
+    var durationQuery = "";
+    var genderQuery = "";
+    
+    switch(budget) {
+    case 1:
+        budgetQuery += " AND Movies.budget > 100000000";
+        break;
+    case 2:
+        budgetQuery = " AND Movies.budget > 20000000";
+        break;
+    case 3:
+        budgetQuery = " AND Movies.budget < 10000000";
+        break;
+    default:
+        budgetQuery = "";
+    }
+
+    switch(gender) {
+    case 1:
+        genderQuery += ' AND Actors.gender = "male"';
+        break;
+    case 2:
+        genderQuery += ' AND Actors.gender = "female"';
+        break;
+    case 3:
+    default:
+        genderQuery = "";
+    }
+
+    switch(duration) {
+    case 1:
+        durationQuery += " AND Movies.duration < 80";
+        break;
+    case 2:
+        durationQuery += " AND Movies.duration < 100";
+        break;
+    case 3:
+        durationQuery = "";
+        break;
+    case 4:
+        durationQuery = " AND Movies.duration > 120";
+        break;
+    default:
+        durationQuery = "";
+        
+    }
+    var query = 'SELECT Actors.name, Actors.aID, Cast_In.role, Movies.name AS mname, Movies.mID FROM Actors, Movies, Genres, Cast_In, Of_Genre WHERE Genres.genre = ? AND Genres.gid = Of_Genre.gid AND Of_Genre.mID = Movies.mID AND Cast_In.mID = Movies.mID AND Cast_In.aID = Actors.aID ' + budgetQuery + genderQuery + durationQuery + ' ORDER BY Actors.num_roles DESC;';
+    
+    
+    var inserts = [genre];
+
+    query = mysql.format(query, inserts);
+    console.log(query);
+        connection.query(query, function(err, rows, fields) {
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+	if (err) {
+	    console.log(err);
+	    res.send(getError(err));
+	}
+
+        else {
+            res.send(rows);
+        }
+
+        
+    });
+
+    
+});
+
 
 app.get('/actorByGenre/:genre', function(req, res) {
     var genre = req.params.genre;
