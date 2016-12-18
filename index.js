@@ -144,15 +144,17 @@ app.get('/actor/:id', function (req, res) {
 });
 
 
-app.get('/query/:genre/:budget/:duration/:gender', function (req, res) {
+app.get('/query/:genre/:budget/:duration/:gender/:rating', function (req, res) {
     var genre = req.params.genre;
     var budget = parseInt(req.params.budget, 10);
     var duration = parseInt(req.params.duration, 10);
     var gender = parseInt(req.params.gender, 10);
-
+    var rating = parseInt(req.params.gender, 10);
+    
     var budgetQuery = "";
     var durationQuery = "";
     var genderQuery = "";
+    var ratingQuery = "";
     
     switch(budget) {
     case 1:
@@ -197,7 +199,30 @@ app.get('/query/:genre/:budget/:duration/:gender', function (req, res) {
         durationQuery = "";
         
     }
-    var query = 'SELECT Actors.name, Actors.aID, Cast_In.role, Movies.name AS mname, Movies.mID FROM Actors, Movies, Genres, Cast_In, Of_Genre WHERE Genres.genre = ? AND Genres.gid = Of_Genre.gid AND Of_Genre.mID = Movies.mID AND Cast_In.mID = Movies.mID AND Cast_In.aID = Actors.aID ' + budgetQuery + genderQuery + durationQuery + ' ORDER BY Actors.num_roles DESC;';
+
+    switch(rating) {
+    case 1:
+        ratingQuery = "";
+        break;
+    case 2:
+        ratingQuery = ' AND (Movies.mpaa = "R" OR Movies.mpaa = "NC-17")'
+        break;
+    case 3:
+        ratingQuery = ' AND Movies.mpaa = "PG-13" '
+        break;
+    case 4:
+        ratingQuery = ' AND Movies.mpaa = "PG" '
+        break;
+    case 5:
+        ratingQuery = ' AND Movies.mpaa = "G" ';
+        break;
+    default:
+        ratingQuery = "";
+        break;
+    }
+    
+        
+    var query = 'SELECT Actors.name, Actors.aID, Cast_In.role, Movies.name AS mname, Movies.mID FROM Actors, Movies, Genres, Cast_In, Of_Genre WHERE Genres.genre = ? AND Genres.gid = Of_Genre.gid AND Of_Genre.mID = Movies.mID AND Cast_In.mID = Movies.mID AND Cast_In.aID = Actors.aID ' + budgetQuery + genderQuery + durationQuery + ratingQuery + ' ORDER BY Actors.num_roles DESC;';
     
     
     var inserts = [genre];
