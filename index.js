@@ -144,17 +144,22 @@ app.get('/actor/:id', function (req, res) {
 });
 
 
-app.get('/query/:genre/:budget/:duration/:gender/:rating', function (req, res) {
+app.get('/query/:genre/:budget/:duration/:gender/:rating/:timeperiod/:success', function (req, res) {
     var genre = req.params.genre;
     var budget = parseInt(req.params.budget, 10);
     var duration = parseInt(req.params.duration, 10);
     var gender = parseInt(req.params.gender, 10);
-    var rating = parseInt(req.params.gender, 10);
+    var rating = parseInt(req.params.rating, 10);
+    var period = parseInt(req.params.timeperiod, 10);
+    var success = parseInt(req.params.success, 10);
+    
     
     var budgetQuery = "";
     var durationQuery = "";
     var genderQuery = "";
     var ratingQuery = "";
+    var periodQuery = "";
+    var successQuery = "";
     
     switch(budget) {
     case 1:
@@ -220,9 +225,47 @@ app.get('/query/:genre/:budget/:duration/:gender/:rating', function (req, res) {
         ratingQuery = "";
         break;
     }
+
+    switch(period) {
+    case 1:
+        periodQuery = "";
+        break;
+    case 2:
+        periodQuery = ' AND Movies.year < 1970';
+        break;
+    case 3:
+        periodQuery = ' AND Movies.year BETWEEN 1970 AND 1999';
+        break;
+    case 4:
+        periodQuery = ' AND Movies.year > 1999';
+        break;
+    default:
+        periodQuery = "";
+        break;
+    }
+
+    switch(success) {
+    case 1:
+        successQuery = "";
+        break;
+    case 2:
+        successQuery = ' AND Movies.gross > Movies.budget';
+        break;
+    case 3:
+        successQuery = ' AND Movies.gross <= Movies.budget';
+        break;
+    default:
+        successQuery = "";
+        break;
+    }
     
         
-    var query = 'SELECT Actors.name, Actors.aID, Cast_In.role, Movies.name AS mname, Movies.mID FROM Actors, Movies, Genres, Cast_In, Of_Genre WHERE Genres.genre = ? AND Genres.gid = Of_Genre.gid AND Of_Genre.mID = Movies.mID AND Cast_In.mID = Movies.mID AND Cast_In.aID = Actors.aID ' + budgetQuery + genderQuery + durationQuery + ratingQuery + ' ORDER BY Actors.num_roles DESC;';
+        
+
+        
+        
+        
+    var query = 'SELECT Actors.name, Actors.aID, Cast_In.role, Movies.name AS mname, Movies.mID FROM Actors, Movies, Genres, Cast_In, Of_Genre WHERE Genres.genre = ? AND Genres.gid = Of_Genre.gid AND Of_Genre.mID = Movies.mID AND Cast_In.mID = Movies.mID AND Cast_In.aID = Actors.aID ' + budgetQuery + genderQuery + durationQuery + ratingQuery + periodQuery + successQuery + ' ORDER BY Actors.num_roles DESC;';
     
     
     var inserts = [genre];
