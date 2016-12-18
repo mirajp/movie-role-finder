@@ -7,6 +7,17 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
 }));
 
+const request = require('request')
+
+
+
+var base_url = 'https://kgsearch.googleapis.com/v1/entities:search?query=';
+var params = '&key=AIzaSyD758LVl3JAs0UwMqxbSg4DOJOVPvbpwq0&limit=1&indent=True';
+var img_query = "Taylor Swift";
+var formatted_query = img_query.replace(" ", "+");
+console.log(formatted_query);
+               
+var imgurl = "";
 
 function getError(err) {
 	var errObj = {};
@@ -104,6 +115,8 @@ app.get('/movie/:id', function (req, res) {
 });
 
 app.get('/actor/:id', function (req, res) {
+
+
     var actorID = parseInt(req.params.id, 10);
     
     var inserts = [actorID];
@@ -120,26 +133,54 @@ app.get('/actor/:id', function (req, res) {
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Access-Control-Allow-Origin', '*');
         
-		if (err) {
-			console.log(err);
-			res.send(getError(err));
-		}
-		else {
-			var actor = { err: 0 };
-			if (rows[1].length == 1) {
-				var movies = rows[0];
-				actor = rows[1][0];
-				var directors = rows[2];
-				
-				actor['movies'] = movies;
-				actor['directors'] = directors;
-			}
-			else {
-				actor['err'] = -1;
-				actor['desc'] = 'No actor with that id';
-			}
-			res.send(actor);
-		}
+	if (err) {
+	    console.log(err);
+	    res.send(getError(err));
+	}
+	else {
+            var actor = { err: 0 };
+
+	    if (rows[1].length == 1) {
+		var movies = rows[0];
+		actor = rows[1][0];
+                img_query = actor['name'];
+                formatted_query = img_query.replace(" ", "+");
+		var directors = rows[2];
+    	
+		actor['movies'] = movies;
+		actor['directors'] = directors;
+                imgurl = "";
+                actor['imgurl'] = imgurl;
+                
+                console.log(base_url + formatted_query + params);
+                
+		request(base_url + formatted_query + params, (error, response, body)=> {
+                    if (!error && response.statusCode === 200) {
+                        const json_response = JSON.parse(body)
+                        if(json_response.itemListElement[0].result.image != undefined) {
+                            imgurl = json_response.itemListElement[0].result.image.contentUrl;
+                            console.log(imgurl);
+                            actor['imgurl'] = imgurl;
+                        }
+                            res.send(actor);
+                        
+                        
+                    } else {
+                        console.log("Got an error: ", error, ", status code: ", response.statusCode)
+                        res.send(actor);
+
+                    }
+                })
+                
+
+	    }
+	    else {
+		actor['err'] = -1;
+		actor['desc'] = 'No actor with that id';
+                res.send(actor);
+
+	    }
+	}
     });
 });
 
