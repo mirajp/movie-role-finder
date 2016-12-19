@@ -120,7 +120,7 @@ app.get('/actor/:id', function (req, res) {
     var actorID = parseInt(req.params.id, 10);
     
     var inserts = [actorID];
-    var moviesQuery = 'SELECT DISTINCT Movies.*, Cast_In.role FROM Movies, Cast_In WHERE Cast_In.mID = Movies.mID AND Cast_In.aID = ?;';
+    var moviesQuery = 'SELECT DISTINCT Movies.*, Cast_In.role FROM Movies, Cast_In WHERE Cast_In.mID = Movies.mID AND Cast_In.aID = ? ORDER BY Movies.year DESC;';
     moviesQuery = mysql.format(moviesQuery, inserts);
     
     var actorQuery = 'SELECT Actors.* FROM Actors WHERE Actors.aID = ?;';
@@ -369,7 +369,7 @@ app.get('/director/:id', function (req, res) {
     var directorID = parseInt(req.params.id, 10);
     
     var inserts = [directorID];
-    var moviesQuery = 'SELECT DISTINCT Movies.* FROM Movies, Directed_By WHERE Directed_By.mID = Movies.mID AND Directed_By.dID = ?;';
+    var moviesQuery = 'SELECT DISTINCT Movies.* FROM Movies, Directed_By WHERE Directed_By.mID = Movies.mID AND Directed_By.dID = ? ORDER BY Movies.year DESC;';
     moviesQuery = mysql.format(moviesQuery, inserts);
     
     var actorsQuery = 'SELECT DISTINCT Actors.* FROM Actors, Cast_In, Movies, Directed_By WHERE Actors.aID = Cast_In.aID AND Movies.mID = Cast_In.mID AND Movies.mID = Directed_By.mID AND Directed_By.dID = ?;';
