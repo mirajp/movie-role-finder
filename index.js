@@ -157,18 +157,19 @@ app.get('/actor/:id', function (req, res) {
 		request(base_url + formatted_query + params, (error, response, body)=> {
                     if (!error && response.statusCode === 200) {
                         const json_response = JSON.parse(body)
-                        if(json_response.itemListElement[0].result.image != undefined) {
-                            imgurl = json_response.itemListElement[0].result.image.contentUrl;
-                            console.log(imgurl);
-                            actor['imgurl'] = imgurl;
+                        if (json_response.itemListElement) {
+                          if (json_response.itemListElement[0]) {
+                            if(json_response.itemListElement[0].result.image != undefined) {
+                                imgurl = json_response.itemListElement[0].result.image.contentUrl;
+                                console.log(imgurl);
+                                actor['imgurl'] = imgurl;
+                            }
+                          }
                         }
-                            res.send(actor);
-                        
-                        
+                         res.send(actor);
                     } else {
                         console.log("Got an error: ", error, ", status code: ", response.statusCode)
                         res.send(actor);
-
                     }
                 })
                 
